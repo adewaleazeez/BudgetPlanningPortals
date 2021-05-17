@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-reverse-engineering PUBLIC "-//Hibernate/Hibernate Reverse Engineering DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd">
+<!--
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+
+Copyright (c) 2008, 2016 Oracle and/or its affiliates. All rights reserved.
+
+Oracle and Java are registered trademarks of Oracle and/or its affiliates.
+Other names may be trademarks of their respective owners.
+
+The contents of this file are subject to the terms of either the GNU
+General Public License Version 2 only ("GPL") or the Common
+Development and Distribution License("CDDL") (collectively, the
+"License"). You may not use this file except in compliance with the
+License. You can obtain a copy of the License at
+http://www.netbeans.org/cddl-gplv2.html
+or nbbuild/licenses/CDDL-GPL-2-CP. See the License for the
+specific language governing permissions and limitations under the
+License.  When distributing the software, include this License Header
+Notice in each file and include the License file at
+nbbuild/licenses/CDDL-GPL-2-CP.  Oracle designates this
+particular file as subject to the "Classpath" exception as provided
+by Oracle in the GPL Version 2 section of the License file that
+accompanied this code. If applicable, add the following below the
+License Header, with the fields enclosed by brackets [] replaced by
+your own identifying information:
+"Portions Copyrighted [year] [name of copyright owner]"
+
+If you wish your version of this file to be governed by only the CDDL
+or only the GPL Version 2, indicate your decision by adding
+"[Contributor] elects to include this software in this distribution
+under the [CDDL or GPL Version 2] license." If you do not indicate a
+single choice of license, a recipient has the option to distribute
+your version of this file under either the CDDL, the GPL Version 2 or
+to extend the choice of license to its licensees as provided above.
+However, if you add GPL Version 2 code and therefore, elected the GPL
+Version 2 license, then the option applies only if the new code is
+made subject to such option by the copyright holder.
+
+Contributor(s):
+-->
+<hibernate-reverse-engineering>
+  <schema-selection match-catalog="OSG_Budget_DB" match-schema="dbo"/>
+  <table-filter match-name="Personnel_Rel_Info"/>
+  <table-filter match-name="MYBF_KPI"/>
+  <table-filter match-name="MTSS_Costing"/>
+  <table-filter match-name="Public_Project_Suggestions"/>
+  <table-filter match-name="MTSS_SubSector_Ceiling"/>
+  <table-filter match-name="Project_Detail"/>
+  <table-filter match-name="Performance_Grades"/>
+  <table-filter match-name="SegmentsSettings"/>
+  <table-filter match-name="Geographic_Segment_Header3"/>
+  <table-filter match-name="Geographic_Segment"/>
+  <table-filter match-name="Fund_Segment_Header1"/>
+  <table-filter match-name="Fund_Segment"/>
+  <table-filter match-name="Segment_Types"/>
+  <table-filter match-name="Sectors"/>
+  <table-filter match-name="Framework_parameter_types"/>
+  <table-filter match-name="MYBF_Figures"/>
+  <table-filter match-name="Economic_Segment_Header4"/>
+  <table-filter match-name="Administrative_Segment_Header2"/>
+  <table-filter match-name="SectorGoals"/>
+  <table-filter match-name="Request_Types"/>
+  <table-filter match-name="Budget_Period"/>
+  <table-filter match-name="Geographic_Segment_Header2"/>
+  <table-filter match-name="Sub_Sectors"/>
+  <table-filter match-name="Menu_User"/>
+  <table-filter match-name="Programme_Segment_Header1"/>
+  <table-filter match-name="Budget_Phases"/>
+  <table-filter match-name="Outputs"/>
+  <table-filter match-name="MYBF_Previous_Forward"/>
+  <table-filter match-name="Menu_Role"/>
+  <table-filter match-name="Personnel_Grade_Levels"/>
+  <table-filter match-name="Incomes"/>
+  <table-filter match-name="Functional_Segment"/>
+  <table-filter match-name="System_Menu"/>
+  <table-filter match-name="Functional_Segment_Header1"/>
+  <table-filter match-name="Meeting_Details"/>
+  <table-filter match-name="Framework_methods"/>
+  <table-filter match-name="Notification_Types"/>
+  <table-filter match-name="Economic_Segment"/>
+  <table-filter match-name="Economic_Segment_Header1"/>
+  <table-filter match-name="User_Role"/>
+  <table-filter match-name="Administrative_Segment"/>
+  <table-filter match-name="Framework_parameters"/>
+  <table-filter match-name="Budget_Timetable"/>
+  <table-filter match-name="Messages"/>
+  <table-filter match-name="Budget_Timetable_Activities"/>
+  <table-filter match-name="Meeting_Deliberations"/>
+  <table-filter match-name="Request_Agent_Types"/>
+  <table-filter match-name="SAP_Personnel"/>
+  <table-filter match-name="SAP_Actuals"/>
+  <table-filter match-name="Menu_Category"/>
+  <table-filter match-name="MDAs"/>
+  <table-filter match-name="Year_Budget"/>
+  <table-filter match-name="Key_Figures"/>
+  <table-filter match-name="MTEF_BO_Version"/>
+  <table-filter match-name="Budget_Status"/>
+  <table-filter match-name="Audit_Trails"/>
+  <table-filter match-name="Geographic_Segment_Header1"/>
+  <table-filter match-name="Outcomes"/>
+  <table-filter match-name="Meeting_Roles"/>
+  <table-filter match-name="Administrative_Segment_Header1"/>
+  <table-filter match-name="Request_Documents"/>
+  <table-filter match-name="Economic_Segment_Header2"/>
+  <table-filter match-name="SectorProgrammes"/>
+  <table-filter match-name="Economic_Segment_Header3"/>
+  <table-filter match-name="sysdiagrams"/>
+  <table-filter match-name="Administrative_Segment_Header3"/>
+  <table-filter match-name="Roles"/>
+  <table-filter match-name="LGAs"/>
+  <table-filter match-name="Budget_Versions"/>
+  <table-filter match-name="Budget_Performance_Review"/>
+  <table-filter match-name="Budget_Type_Component_Types"/>
+  <table-filter match-name="MTEF_Department_Figures"/>
+  <table-filter match-name="Functional_Segment_Header2"/>
+  <table-filter match-name="MYBF_Figure_Own_Percentage_Values"/>
+  <table-filter match-name="Programme_Segment"/>
+  <table-filter match-name="MTSS_Sector_Ceiling"/>
+  <table-filter match-name="Budget_Version_Status"/>
+  <table-filter match-name="Users"/>
+  <table-filter match-name="Programme_Segment_Header3"/>
+  <table-filter match-name="Meeting_Attendants"/>
+  <table-filter match-name="Budget_Types"/>
+  <table-filter match-name="Personnel_Cost_Items"/>
+  <table-filter match-name="MYBF_Narrations"/>
+  <table-filter match-name="Meeting_Agenda_Details"/>
+  <table-filter match-name="Meeting_Agenda"/>
+  <table-filter match-name="Policy_Group"/>
+  <table-filter match-name="Budget_Type_Components"/>
+  <table-filter match-name="Programme_Segment_Header2"/>
+  <table-filter match-name="Chart_of_Accounts"/>
+  <table-filter match-name="Goals"/>
+  <table-filter match-name="Budget_Years"/>
+  <table-filter match-name="Policies"/>
+  <table-filter match-name="Message_Types"/>
+  <table-filter match-name="Fund_Segment_Header2"/>
+  <table-filter match-name="Request_Details"/>
+  <table-filter match-name="Scoring"/>
+  <table-filter match-name="MTSS_MDA_Ceiling"/>
+  <table-filter match-name="Department_HOD"/>
+  <table-filter match-name="Departments"/>
+  <table-filter match-name="Request_Approvals"/>
+  <table-filter match-name="Notifications"/>
+  <table-filter match-name="Policy_Mda"/>
+  <table-filter match-name="Request_Agents"/>
+</hibernate-reverse-engineering>

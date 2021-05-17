@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Aug 14, 2018 4:16:02 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.bpp.hibernate.ProgrammeSegmentHeader3" table="Programme_Segment_Header3" catalog="OSG_Budget_DB">
+        <id name="id" type="int">
+            <column name="id" />
+            <generator class="assigned"></generator>
+        </id>
+        <property name="name" type="string">
+            <column name="name" length="150" />
+        </property>
+        <property name="code" type="string">
+            <column name="code" length="150" />
+        </property>
+        <property name="parent" type="int">
+            <column name="parent" not-null="true" />
+        </property>
+        <property name="dateCreated" type="timestamp">
+            <column name="date_created" length="23" not-null="true" />
+        </property>
+        <property name="orgId" type="java.lang.Integer">
+            <column name="org_id" />
+        </property>
+        <property name="mda" type="java.lang.Integer">
+            <column name="mda" />
+        </property>
+        <property name="department" type="java.lang.Integer">
+            <column name="department" />
+        </property>
+        <property name="sectorGoal" type="java.lang.Integer">
+            <column name="sector_goal" />
+        </property>
+        <property name="yearId" type="java.lang.Integer">
+            <column name="year_id" />
+        </property>
+        <property name="projectStatus" type="java.lang.Boolean">
+            <column name="project_status" />
+        </property>
+        <property name="score" type="java.lang.Double">
+            <column name="score" precision="53" scale="0" />
+        </property>
+        <property name="rank" type="java.lang.Integer">
+            <column name="rank" />
+        </property>
+        <property name="sectorProgramme" type="java.lang.Integer">
+            <column name="sector_programme" />
+        </property>
+        <property name="policy" type="string">
+            <column name="policy" length="10" />
+        </property>
+    </class>
+</hibernate-mapping>

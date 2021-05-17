@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Aug 14, 2018 4:16:02 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.bpp.hibernate.ProjectDetail" table="Project_Detail" catalog="OSG_Budget_DB" optimistic-lock="version">
+        <id name="id" type="int">
+            <column name="id" />
+            <generator class="assigned"></generator>
+        </id>
+        <property name="mda" type="int">
+            <column name="mda" />
+        </property>
+        <property name="department" type="int">
+            <column name="department" />
+        </property>
+        <property name="code" type="string">
+            <column name="code" length="20" unique="true" />
+        </property>
+        <property name="sectorGoal" type="string">
+            <column name="sector_goal" />
+        </property>
+        <property name="sectorProgramme" type="string">
+            <column name="sector_programme" />
+        </property>
+        <property name="rank" type="int">
+            <column name="rank" />
+        </property>
+        <property name="dateCreated" type="timestamp">
+            <column name="date_created" length="23" />
+        </property>
+        <property name="orgId" type="java.lang.Integer">
+            <column name="org_id" />
+        </property>
+        <property name="score" type="java.lang.Float">
+            <column name="score" precision="24" scale="0" />
+        </property>
+        <property name="name" type="string">
+            <column name="name" length="500" />
+        </property>
+        <property name="yearId" type="java.lang.Integer">
+            <column name="year_id" />
+        </property>
+        <property name="projectStatus" type="java.lang.Integer">
+            <column name="project_status" />
+        </property>
+        <property name="policy" type="string">
+            <column name="policy" length="20" />
+        </property>
+        <property name="programme" type="string">
+            <column name="programme" length="20" />
+        </property>
+        <property name="objective" type="string">
+            <column name="objective" length="20" />
+        </property>
+        <property name="projectCode" type="string">
+            <column name="project_code" length="20" />
+        </property>
+        
+    </class>
+</hibernate-mapping>

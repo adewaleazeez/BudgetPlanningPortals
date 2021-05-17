@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Aug 14, 2018 4:16:02 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.bpp.hibernate.SapActuals" table="SAP_Actuals" catalog="OSG_Budget_DB">
+        <id name="id" type="int">
+            <column name="id" />
+            <generator class="assigned"></generator>
+        </id>
+        <property name="recType" type="string">
+            <column name="RecType" length="5" not-null="true" />
+        </property>
+        <property name="versionName" type="string">
+            <column name="versionName" length="10" not-null="true" />
+        </property>
+        <property name="valueTyp" type="string">
+            <column name="ValueTyp" length="10" not-null="true" />
+        </property>
+        <property name="fmDocument" type="string">
+            <column name="FmDocument" length="10" />
+        </property>
+        <property name="fiDocument" type="string">
+            <column name="FiDocument" length="20" not-null="true" />
+        </property>
+        <property name="fund" type="string">
+            <column name="Fund" length="10" not-null="true" />
+        </property>
+        <property name="fundsCtr" type="string">
+            <column name="FundsCtr" length="25" not-null="true" />
+        </property>
+        <property name="cmmtItem" type="string">
+            <column name="CmmtItem" length="10" not-null="true" />
+        </property>
+        <property name="fundedProg" type="string">
+            <column name="FundedProg" length="30" not-null="true" />
+        </property>
+        <property name="busArea" type="string">
+            <column name="BusArea" length="15" not-null="true" />
+        </property>
+        <property name="amountTc" type="double">
+            <column name="AmountTc" precision="53" scale="0" not-null="true" />
+        </property>
+        <property name="amountLc" type="double">
+            <column name="AmountLc" precision="53" scale="0" not-null="true" />
+        </property>
+        <property name="currency" type="string">
+            <column name="Currency" length="5" not-null="true" />
+        </property>
+        <property name="glAccount" type="string">
+            <column name="GlAccount" length="20" not-null="true" />
+        </property>
+        <property name="period" type="string">
+            <column name="Period" length="20" not-null="true" />
+        </property>
+        <property name="funcArea" type="string">
+            <column name="FuncArea" length="20" not-null="true" />
+        </property>
+        <property name="fiscYear" type="int">
+            <column name="FiscYear" not-null="true" />
+        </property>
+        <property name="dateCreated" type="timestamp">
+            <column name="date_created" length="23" not-null="true" />
+        </property>
+        <property name="orgId" type="java.lang.Integer">
+            <column name="org_id" not-null="true" />
+        </property>
+    </class>
+</hibernate-mapping>

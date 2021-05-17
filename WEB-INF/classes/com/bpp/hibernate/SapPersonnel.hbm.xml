@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Aug 14, 2018 4:16:02 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.bpp.hibernate.SapPersonnel" table="SAP_Personnel" catalog="OSG_Budget_DB">
+        <id name="id" type="int">
+            <column name="id" />
+            <generator class="assigned"></generator>
+        </id>
+        <property name="mandt" type="string">
+            <column name="MANDT" length="50" />
+        </property>
+        <property name="fiscalYear" type="string">
+            <column name="FISCAL_YEAR" length="50" />
+        </property>
+        <property name="repDate" type="string">
+            <column name="REP_DATE" length="50" />
+        </property>
+        <property name="repTime" type="string">
+            <column name="REP_TIME" length="50" />
+        </property>
+        <property name="adminSegment" type="string">
+            <column name="ADMIN_SEGMENT" length="50" />
+        </property>
+        <property name="mdaOrgId" type="string">
+            <column name="MDA_ORG_ID" length="50" />
+        </property>
+        <property name="mdaName" type="string">
+            <column name="MDA_NAME" length="200" />
+        </property>
+        <property name="deptUnitId" type="string">
+            <column name="DEPT_UNIT_ID" length="50" />
+        </property>
+        <property name="deptUnitName" type="string">
+            <column name="DEPT_UNIT_NAME" length="200" />
+        </property>
+        <property name="costCenter" type="string">
+            <column name="COST_CENTER" length="50" />
+        </property>
+        <property name="posJobId" type="string">
+            <column name="POS_JOB_ID" length="50" />
+        </property>
+        <property name="posJobName" type="string">
+            <column name="POS_JOB_NAME" length="200" />
+        </property>
+        <property name="salGrade" type="string">
+            <column name="SAL_GRADE" length="50" />
+        </property>
+        <property name="hcCurrent" type="java.lang.Double">
+            <column name="HC_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="hcNext" type="java.lang.Double">
+            <column name="HC_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="amtCurrent" type="java.lang.Double">
+            <column name="AMT_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="amtNext" type="java.lang.Double">
+            <column name="AMT_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="basicCurrent" type="java.lang.Double">
+            <column name="BASIC_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="transportCurrent" type="java.lang.Double">
+            <column name="TRANSPORT_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="rentCurrent" type="java.lang.Double">
+            <column name="RENT_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="bonusCurrent" type="java.lang.Double">
+            <column name="BONUS_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="othersCurrent" type="java.lang.Double">
+            <column name="OTHERS_CURRENT" precision="53" scale="0" />
+        </property>
+        <property name="basicNext" type="java.lang.Double">
+            <column name="BASIC_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="transportNext" type="java.lang.Double">
+            <column name="TRANSPORT_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="rentNext" type="java.lang.Double">
+            <column name="RENT_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="bonusNext" type="java.lang.Double">
+            <column name="BONUS_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="othersNext" type="java.lang.Double">
+            <column name="OTHERS_NEXT" precision="53" scale="0" />
+        </property>
+        <property name="dateCreated" type="timestamp">
+            <column name="date_created" length="23" />
+        </property>
+        <property name="orgId" type="java.lang.Integer">
+            <column name="org_id" />
+        </property>
+    </class>
+</hibernate-mapping>

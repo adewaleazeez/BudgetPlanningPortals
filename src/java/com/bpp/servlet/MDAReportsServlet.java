@@ -1,0 +1,1763 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.bpp.servlet;
+
+import com.bpp.hibernate.BudgetTypeComponentsHibernateHelper;
+import com.bpp.hibernate.HibernateUtil;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import org.hibernate.HibernateException;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
+/**
+ *
+ * @author Ola
+ */
+public class MDAReportsServlet extends HttpServlet {
+
+    /**
+     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
+     * methods.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    String _MDA;
+
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        HttpSession session = request.getSession(true);
+        _MDA = "011100100200";
+//        MdaHibernateHelper mdahelper = new MdaHibernateHelper();     
+//        resp = mdahelper.fetchByUserRole(userid, userrole);        
+        _MDA = chechFirst(session);
+        PrintWriter out = response.getWriter();
+        String resp = "Nothing to Show";
+        String _budget_year = request.getParameter("budget_year");
+        String _ReportNumber = request.getParameter("ReportNumber");
+        String _ReportItem = null;
+        String _ItemName = null;
+        _ReportItem = request.getParameter("ReportItem");
+        _ItemName = request.getParameter("ItemName");
+        String _ReportHead = request.getParameter("ReportHead");
+        String _ActiveCurrency  = request.getParameter("ActiveCurrency");
+        String _ActiveVersion  = request.getParameter("ActiveVersion");
+        String _ActiveBudgetType  = request.getParameter("ActiveBudgetType");
+        Integer ReportNumber;
+        //String ReportItem=_ReportItem;
+        Integer year;
+        String ReportHead;
+        String html = "";
+        ////////////////////////////////
+
+        if (_budget_year != null && _budget_year != "") {
+            year = Integer.parseInt(_budget_year);
+        } else {
+            out.println(resp);
+            return;
+        }
+        if (_ReportNumber != null && _ReportNumber != "") {
+            ReportNumber = Integer.parseInt(_ReportNumber);
+            if (ReportNumber == 13) {
+                _ReportHead = "21010103,21020202,22010101,22010102,22010104,22060102,22060202,22070104,22070105,22070106";
+            }
+        } else {
+            out.println(resp);
+            return;
+        }
+        String[] ReportHeadAry = null;
+        if (_ReportHead != null) {
+            ReportHeadAry = _ReportHead.split("\\,");
+        } else {
+            ReportHeadAry = request.getParameterValues("ReportHead");
+        }
+
+//        System.out.println(ReportNumber);
+        if (null != _ReportItem) {
+            switch (_ReportItem) {
+                case "Allocation":
+                    switch (ReportNumber) {
+                        case 5:
+                            resp = RevenueReport(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                            break;
+                        case 17:
+                            resp = RevenueReport0(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                            break;
+                        case 3:
+                            resp = RevenueFirstSchedule(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                            break;
+                        case 4:
+                            resp = RevenueSecondSchedule(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "Personnel":
+                    switch (ReportNumber) {
+                        case 40:
+                            resp = SummaryPersonnelCost(year, ReportNumber, _ActiveVersion);
+                            break;
+                        case 42:
+                            resp = PersonnelReport1(year, ReportNumber, _ActiveVersion);
+                            break;
+                        default:
+                            resp = PersonnelReport(year, ReportNumber, _ActiveVersion);
+                            break;
+                    }
+                    break;
+//                case "Sectors":
+//                    resp = SectorReport(year, _ReportItem, _ItemName, _ReportHead, ReportNumber, _ActiveVersion);
+//                    break;
+//                case "SubSectors":
+//                    resp = SectorReport(year, _ReportItem, _ItemName, _ReportHead, ReportNumber, _ActiveVersion);
+//                    break;
+                case "Revenue":
+                    if (ReportNumber == 6) {
+                        //resp = RevenuReportbyEconomicSegment(year, _ReportItem, _ItemName, _ReportHead, ReportNumber, _ActiveVersion);
+                    } else {
+                        resp = RevenuReport(year, _ReportItem, _ItemName, _ReportHead, ReportNumber, _ActiveVersion);
+                    }
+                    break;
+                case "Independent Revenue":
+                    resp = GetIRbySectorReports(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                    break;
+                case "Revenue Details":
+                    resp = RevenueEstimatesReport(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                    break;
+                case "Recurrent Estimates":
+                    resp = RevenueReport1(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                    break;
+                case "Grants":
+                    resp = GrantReport(year, _ReportHead, _ItemName, _ReportItem, ReportNumber, _ActiveVersion);
+                    break;
+                case "CRF":
+                    resp = CRFReport(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                    break;
+                case "Expenditures":
+                    resp = RevenueEstimatesReport0(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+                    break;
+//                case "Sectoral Summary":
+//                    resp = SectoralSummary(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+//                    break;
+//                case "Segments":
+//                    if (ReportNumber == 33) {
+//                        _ItemName = "Economic Segment";
+//                    }
+//                    resp = SegmentReport(year, _ReportHead, _ItemName, ReportNumber, _ActiveVersion);
+//                    //resp = SectoralSummary(year, ReportHeadAry, ReportNumber, _ActiveVersion);
+//                    break;
+                case "Capital Estimates":
+                    if (ReportNumber.equals(20)) {
+                        // resp = GetMdaReports(year, _ItemName, _ReportHead, ReportNumber, _ActiveVersion);
+                    } else if (ReportNumber.equals(21)) {
+                        resp = GetMdasReports(year, _ItemName, ReportNumber, _ActiveVersion);
+                    } else if (ReportNumber.equals(22)) {
+                        //resp = GetBudgetBySectors(year, ReportNumber, _ActiveVersion);
+                    }
+                    break;
+                case "Budget Summary":
+                    if (ReportNumber.equals(26)) {
+                        //resp = GetFunctionalSegmentBudget(year, ReportNumber, _ActiveVersion);
+                    } else if (ReportNumber.equals(25)) {
+                        // resp = SummaryProgrammeSegment(year, ReportNumber, _ActiveVersion);
+                    } else if (ReportNumber.equals(28)) {
+                        //resp = CapitalBudgetbyPolicyReport(year, ReportNumber, _ActiveVersion);
+                    } else if (ReportNumber.equals(19) || ReportNumber.equals(18)) {
+                        //resp = ConsolidatedBudgetSummary0(year, ReportNumber, _ActiveVersion);
+                    } else if (ReportNumber.equals(24)) {
+                        resp = CapitalBudgetAllocation2MDAS(year, ReportNumber, _ActiveVersion);
+                    }
+
+                    break;
+//
+//                default:
+//                    break;
+            }
+        }
+        out.println(resp);
+    }
+
+    protected String chechFirst(HttpSession session) {
+        String userid = session.getAttribute("userid").toString();
+        String userrole = session.getAttribute("userrole").toString();
+        String resp = fetchByUserRole(userid, userrole);
+        //System.out.println(resp);
+        //System.out.println(resp);
+        return resp;
+    }
+
+    public synchronized String fetchByUserRole(String userid, String userrole) {
+        List subsectorsList = null;
+        String jsonList = "";
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            String sql = "";
+
+            sql = "select a.administrative_segment from Mdas a where a.sub_sector_code<>'00' and a.id=(select mda_id from users where id='" + userid + "') order by a.sub_sector_code, a.name";
+
+            SQLQuery q = session.createSQLQuery(sql);
+            subsectorsList = q.list();
+            jsonList = subsectorsList.get(0).toString();
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return jsonList;
+    }
+
+    public String RevenueFirstSchedule(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        //Get the List of viable MDAs
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='" + Filt.length + 3 + "'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, Filt.toString(), year)
+                + "</th></tr><tr><th>Code</th><th>MDA Name</th>";
+        String Heading[] = Filt;
+        BudgetTypeComponentsHibernateHelper btc = new BudgetTypeComponentsHibernateHelper();
+        int i = 0;
+        for (String str : Filt) {
+            htmltable += "<th>" + btc.fetch_name(str).replace("\"", "").replace("[", "").replace("]", "") + "</th>";// Heading[i] = btc.fetch_name(str);
+            i++;
+        }
+        htmltable += "<th>Total</th></tr></thead><tbody>";
+        i = 0;
+        Integer j = 0;
+        String sql = "";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            sql = "WITH Nv as(Select a.administrative_segment as code, a.name as Name,"
+                    + " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.economic_segment LIKE '21010101%' AND b.budget_year_id=" + (year) + ") as A0 ,"
+                    + " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.economic_segment LIKE '2202%' AND b.budget_year_id=" + (year) + ") as A1 ,"
+                    + " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.economic_segment LIKE '2210%' AND b.budget_year_id=" + (year) + ") as A2 ,"
+                    + " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.budget_year_id=" + (year) + ") as Total"
+                    + " FROM MDAs a where a.sub_sector_code !='00' and a.administrative_segment = '" + _MDA + "') SELECT N.code, N.name, N.A0,N.A1,N.A2, N.A0+N.A1+N.A2  from Nv N UNION select 'Total', '', isnull(Sum(N.A0),0),isnull(sum(N.A1),0),isnull(sum(N.A2),0),isnull(Sum(N.A0),0)+isnull(sum(N.A1),0)+isnull(sum(N.A2),0) from Nv N";
+
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            //Generate HTML Table
+            String html = "";
+            j = 0;
+            for (Object[] tmp1 : tmp) {
+                html += "<tr>";
+                if ("Total".equals(tmp1[0])) {
+                    html += "<th colspan='2'>Total</th><th style='display:none'></th>";
+                    for (int k = 2; k < tmp1.length; k++) {
+                        html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                    }
+                } else {
+                    for (int k = 0; k < tmp1.length; k++) {
+                        if (k > 1) {
+                            html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                        } else {
+                            html += "<td>" + tmp1[k] + "</td>";
+                        }
+                    }
+                }
+                html += "</tr>";
+            }
+
+            htmltable += html + "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    public String RevenueSecondSchedule(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        //Get the List of viable MDAs
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='" + Filt.length + 4 + "'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, Filt.toString(), year)
+                + "</th></tr><tr><th>Code</th><th>MDA Name</th>";
+        String Heading[] = Filt;
+        BudgetTypeComponentsHibernateHelper btc = new BudgetTypeComponentsHibernateHelper();
+        int i = 0;
+        for (String str : Filt) {
+            htmltable += "<th>" + btc.fetch_name(str).replace("\"", "").replace("[", "").replace("]", "") + "</th>";// Heading[i] = btc.fetch_name(str);
+            i++;
+        }
+        htmltable += "<th>Total</th></tr></thead><tbody>";
+        i = 0;
+        Integer j = 0;
+        String sql = "";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            sql = "WITH Nv as(Select a.administrative_segment as code, a.name as Name,";
+            for (String str : Filt) {
+                sql += " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.economic_segment LIKE '" + str + "%' AND b.budget_year_id=" + year + ") as A" + i++ + "";
+            }
+            sql += " FROM MDAs a where a.sub_sector_code !='00' and a.administrative_segment = '" + _MDA + "') SELECT N.code, N.name, N.A0, N.A0 as A1  from Nv N UNION select 'Total', '', Sum(N.A0),Sum(N.A0) from Nv N";
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            //Generate HTML Table
+            String html = "";
+            j = 0;
+            for (Object[] tmp1 : tmp) {
+                html += "<tr>";
+                if ("Total".equals(tmp1[0])) {
+                    html += "<th colspan='2'>Total</th><th style='display:none'></th>";
+                    for (int k = 2; k < tmp1.length; k++) {
+                        html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                    }
+                } else {
+                    for (int k = 0; k < tmp1.length; k++) {
+                        if (k > 1) {
+                            html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                        } else {
+                            html += "<td>" + tmp1[k] + "</td>";
+                        }
+                    }
+                }
+                html += "</tr>";
+            }
+
+            htmltable += html + "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    public String RevenueEstimatesReport0(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        BudgetTypeComponentsHibernateHelper btc = new BudgetTypeComponentsHibernateHelper();
+        String CategoryStr = "";
+        if (ReportNum == 12 || ReportNum == 15) {
+            CategoryStr = btc.fetch_name(Filt[0]).replace("\"", "").replace("[", "").replace("]", "");
+        }
+        String tmp0 = "and (";
+        String tmp1 = "and (";
+        //and (CmmtItem like '12%' or CmmtItem like '13%' or CmmtItem like '14%' or CmmtItem like '15%')
+        for (String flt : Filt) {
+            tmp0 += "CmmtItem like '" + flt + "%' or ";
+        }
+        tmp0 = tmp0.substring(0, tmp0.length() - 3);
+        tmp0 += ")";
+        for (String flt : Filt) {
+            tmp1 += "economic_segment like '" + flt + "%' or ";
+        }
+        tmp1 = tmp1.substring(0, tmp1.length() - 3);
+        tmp1 += ")";
+        String sql = "select administrative_Segment as admin_segment,'' as code,name, 0 as amt1, 0 as amt2, 0 as amt3, 0 as amt4  from mdas"
+                + " where sub_sector_code <> '00' and administrative_segment = '" + _MDA + "'"
+                + " union"
+                + " SELECT a.admin_segment, a.economic_segment as code,"
+                + " (select name from Economic_Segment where code=a.economic_segment) as name,"
+                + " (select ISNULL(sum(AmountLc),0) from SAP_Actuals where FiscYear=(" + (year - 2) + ") " + tmp0 + " and CmmtItem =a.economic_segment and FundsCtr=a.admin_segment) as A1,"
+                + " (select ISNULL(sum(AmountLc),0) from SAP_Actuals where FiscYear=(" + (year - 1) + ") " + tmp0 + " and CmmtItem=a.economic_segment and FundsCtr=a.admin_segment) as A2, "
+                + " (select ISNULL(sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and admin_segment=a.admin_segment " + tmp1 + " and economic_segment=a.economic_segment and b.budget_year_id=(" + (year - 1) + ")) as B1,"
+                + " (select ISNULL(sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and admin_segment=a.admin_segment " + tmp1 + " and economic_segment=a.economic_segment and b.budget_year_id=(" + (year) + ")) as B2"
+                + " FROM Year_Budget a INNER JOIN MDAs M on M.administrative_segment = a.admin_segment WHERE " + tmp1.substring(3, tmp1.length())
+                + " and a.budget_version_id='"+_ActiveVersion+"' and M.sub_sector_code<>'00'  and administrative_segment = '" + _MDA + "' group by a.admin_segment,a.programme_segment,a.economic_segment,a.functional_segment,a.fund_segment,a.geo_segment,a.dept_id, a.percent_complete, a.complete_from, a.complete_to,a.id"
+                + " order by admin_segment";
+//            System.out.println(sql);
+        String TableTitle = "";
+        String TableContent = "";
+        String TableFooter = "";
+        String dummy = "";
+        String h1 = "<table class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='6'>ONDO STATE OF NIGERIA "
+                + Titles(ReportNum, "", year);
+        String TableHeader = "</th></tr><trbgcolor='#d9d9d9'><th>Code</th><th>Description</th><th>Actual Revenue</br>Jan - Dec " + (year - 2) + "</th><th>Actual Revenue</br>Jan - Dec</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + year + "</th></tr></thead><tbody>";
+        String htmltable = "";
+        double[] smry = new double[Filt.length + 4];
+        String Heading[] = Filt;
+
+        int i = 0;
+        Integer j = 0;
+        String other = "";
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        smry[0] = 0;
+        smry[1] = 0;
+        smry[2] = 0;
+        smry[3] = 0;
+
+        try {
+            tx = session.beginTransaction();
+            //get sector codes and names
+            String html = "";
+
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            Integer ncount = tmp.size();
+            Integer kcount = tmp.get(0).length;
+            //System.out.println("ncount  " + ncount);
+            for (int n = 0; n < ncount; n++) {
+                if ("".equals((String) tmp.get(n)[1]) || tmp.get(n)[1] == null) {
+
+                    if (!"".equals(TableContent)) {
+                        dummy = "" + tmp.get(n)[0] + " - " + tmp.get(n)[2];
+                        TableTitle = h1 + "<br>" + dummy + "<br>" + CategoryStr;
+                        TableFooter = "<tr bgcolor='#e6e6e6'><th colspan='2'>Total</th><th style='text-align:right'>" + String.format("%,.2f", smry[0]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[1]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[2]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[3]) + "</th></tr><tr style='height:40px;'></tr>";
+                        for (int k = 0; k < 4; k++) {
+                            smry[k] = 0;
+                        }
+
+                        htmltable += TableTitle + TableHeader + TableContent + TableFooter + "<br><br></tbody></table>";
+                    }
+                    TableContent = "";
+
+                } else {
+                    TableContent += "<tr><td>" + tmp.get(n)[1] + "</td><td>" + tmp.get(n)[2] + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[3]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[4]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[5]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[6]) + "</td></tr>";
+                    for (int k = 0; k < 4; k++) {
+                        smry[k] += (Double) tmp.get(n)[3 + k];
+                    }
+                }
+            }
+//            System.out.println(htmltable);
+            TableTitle = h1 + "<br>" + dummy + "<br>" + CategoryStr;
+            htmltable += TableTitle + TableHeader + TableContent + TableFooter + "<br><br></tbody></table>";
+            htmltable = "<table id='reptable'><thead><tr><td></td></tr></thead><tbody><tr><td>" + htmltable + "</td></tr></tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        //System.out.println(htmltable);
+        return htmltable;
+    }
+
+    public String RevenueReport0(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        //Get the List of viable MDAs
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='" + Filt.length + 3 + "'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, Filt.toString(), year)
+                + "</th></tr><tr><th>Code</th><th>MDA Name</th>";
+
+        double[] smry = new double[Filt.length + 3];
+        String Heading[] = Filt;
+        BudgetTypeComponentsHibernateHelper btc = new BudgetTypeComponentsHibernateHelper();
+        int i = 0;
+        for (String str : Filt) {
+            htmltable += "<th>" + btc.fetch_name(str).replace("\"", "").replace("[", "").replace("]", "") + "</th>";
+            i++;
+        }
+        htmltable += "<th>Total</th></tr></thead><tbody>";
+        i = 0;
+        Integer j = 0;
+        String sql = "";
+        String other = "";
+        for (String str : Filt) {
+            other += " AND b.economic_segment NOT like '" + str + "%' ";
+        }
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+
+            i = 3;
+            String dummy = " (Select isnull(sum(B.budget_amount),0) from Year_Budget B where B.budget_version_id='"+_ActiveVersion+"' and B.admin_segment= m.administrative_segment and B.budget_year_id=(" + year + ") and B.economic_segment like '";
+            sql = "with nV as (SELECT M.administrative_segment as code , M.name as name,";
+            for (String str : Filt) {
+                sql += dummy + str + "%') as C" + i++ + " ,";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += " from MDAs M where M.sub_sector_code<>'00' and M.administrative_segment = '" + _MDA + "')SELECT x.code, x.name, ";
+            i = 3;
+            for (String str : Filt) {
+                sql += "x.C" + i++ + ",";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            i = 3;
+            sql += ",x.c3+x.c4+x.c5+x.c6+x.c7+x.c8+x.c9 FROM nV AS x UNION SELECT 'Sub Total', '', ";
+            for (String str : Filt) {
+                sql += "SUM(xx.C" + i++ + "),";
+            }
+            sql = sql.substring(0, sql.length() - 1);
+            sql += ",Sum(xx.c3)+Sum(xx.c4)+Sum(xx.c5) +Sum(xx.c6)+Sum(xx.c7)+Sum(xx.c8)+Sum(xx.c9) FROM nV AS xx";
+//            System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            //Generate HTML Table
+            String html = "";
+            j = 0;
+            for (Object[] tmp1 : tmp) {
+                html += "<tr>";
+                for (int k = 0; k < tmp1.length; k++) {
+
+                    if (k > 1) {
+                        smry[k] += (double) tmp1[k];
+                        html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                    } else {
+                        html += "<td>" + tmp1[k] + "</td>";
+                    }
+                }
+                html += "</tr>";
+            }
+
+            htmltable = htmltable + html;
+//            for (int k = 2; k < smry.length; k++) {
+//                htmltable += "<th align='right'>" + String.format("%,.2f", smry[k]) + "</th>";
+//            }
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    protected String SummaryPersonnelCost(Integer year, Integer ReportNum, String _ActiveVersion) {
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th class='text-center' colspan='9'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, "", year) + "</tr>";
+        htmltable += "<tr> <th>Head</th> <th>MDAs Name</th> <th>Basic Salary</th> <th>Transport</th> <th> Rent</th> <th> Bonus</th> <th>Others</th> "
+                + "<th>Estimate " + (year - 1) + "</th> <th>Approved Estimate " + (year) + "</th>"
+                + "</thead></tr><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+
+//            String sql = "with nV AS( select a.administrative_segment as code, a.name as name, ISNULL(sum(b.basic),0) as basic, ISNULL"
+//                    + "(sum(b.Transport),0) as transport, ISNULL(sum(b.Rent),0) as total_rent, ISNULL(sum(b.Bonus),0) as total_bonus, "
+//                    + "ISNULL(sum(b.others),0) as others, ISNULL(sum(b.Estimate_current_year),0) as current_year, ISNULL(sum(b.Estimate_next_year)"
+//                    + ",0) as next_year from MDAs a LEFT JOIN PersonnelTable b ON(a.administrative_segment = b.Admin_Segment) where sub_sector_code <> '00'  and a.administrative_segment = '" + _MDA + "'"
+//                    + "GROUP BY a.administrative_segment,a.name) select n.code, n.name, n.basic, n.transport, n.total_rent, n.total_bonus,n.others, "
+//                    + "n.current_year,n.next_year from nV n union select 'Total', '', Sum(n.basic), sum(n.transport), SUM(n.total_rent), SUM(n.total_bonus),"
+//                    + "SUM(n.others), sum(n.current_year),sum(n.next_year) from nV n";
+            String sql = "with nV as(SELECT a.administrative_segment AS code, a.name AS name, ISNULL(sum(b.BASIC_NEXT),0) AS basic, ISNULL(sum(b.TRANSPORT_NEXT),0) AS transport, ISNULL(sum(b.RENT_NEXT),0) AS rent, ISNULL(sum(b.BONUS_NEXT),0) AS bonus, ISNULL(sum(b.OTHERS_NEXT),0) AS others, ISNULL(sum(b.BASIC_CURRENT),0)+ISNULL(sum(b.BASIC_CURRENT),0)+ISNULL(sum(b.RENT_CURRENT),0)+ISNULL(sum(b.BONUS_CURRENT),0)+ISNULL(sum(b.OTHERS_CURRENT),0) as Tc, ISNULL(sum(b.BASIC_NEXT),0)+ISNULL(sum(b.BASIC_NEXT),0)+ISNULL(sum(b.RENT_NEXT),0)+ISNULL(sum(b.BONUS_NEXT),0)+ISNULL(sum(b.OTHERS_NEXT),0) as Tn FROM MDAs AS a INNER JOIN SAP_Personnel b ON b.ADMIN_SEGMENT = a.administrative_segment WHERE b.FISCAL_YEAR=" + year + " AND a.sub_sector_code <> '00' and a.administrative_segment = '" + _MDA + "' GROUP BY a.administrative_segment, a.name) Select n.code, n.name, n.basic, n.transport, n.rent, n.bonus, n.others,Tc,Tn from nV n union all select 'Total', '', Sum(n.basic), sum(n.transport), SUM(n.rent), SUM(n.bonus),SUM(n.others), sum(n.Tc),sum(n.Tn) from nV n";
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            Integer ncount = tmp.size();
+            for (int n = 0; n < ncount - 1; n++) {
+                htmltable += "<tr>";
+                htmltable += "<td> " + tmp.get(n)[0] + "</td>";
+                htmltable += "<td> " + tmp.get(n)[1] + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[2]) + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[3]) + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[4]) + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[5]) + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[6]) + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[7]) + "</td>";
+                htmltable += "<td style='text-align:right;'> " + String.format("%,.2f", tmp.get(n)[8]) + "</td>";
+                htmltable += "</tr>";
+
+            }
+            htmltable += "<tr><th colspan='2'>Total</th><th style='display:none'></th>";
+            for (int i = 2; i < tmp.get(ncount - 1).length; i++) {
+                htmltable += "<th style='text-align:right;'>" + String.format("%,.2f", tmp.get(ncount - 1)[i]) + "</th>";
+            }
+            htmltable += "</tr>";
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    protected String PersonnelReport(Integer year, Integer ReportNum, String _ActiveVersion) {
+        String Heading = "ONDO STATE OF NIGERIA</br>";
+        String dummy;
+
+        dummy = Titles(ReportNum, "", year);
+
+        String htmltable = "";
+        String thead = "";
+        htmltable = "<table id='reptable' class='table table-bordered'><thead style='background-color: #f8f8f8; display:none'><tr><th id='reptitle' class='text-center' colspan='6'>" + Heading + dummy;
+        htmltable += "<tr><th colspan='3'>Establishment</th><th>Details of Expenditure</th><th>Approved Estimate</th><th>Approved Estimate</th></tr>"
+                + "<tr><th></th><th></th><th></th><th></th><th></th><th></th>"
+                + "</thead><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        int j = 0;
+        try {
+            tx = session.beginTransaction();
+            String sql = "";
+
+            sql = "with nV as( SELECT M.administrative_segment code ,M.name name , P.HC_CURRENT hc0, P.HC_NEXT hc1, P.POS_JOB_NAME details, P.SAL_GRADE GL, P.AMT_CURRENT est0, P.AMT_NEXT est1 from SAP_Personnel P INNER JOIN MDAs M on M.administrative_segment = P.Admin_Segment WHERE P.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "') Select n.code as code, n.name as mda, ROW_NUMBER() OVER (ORDER BY n.code) AS sn, ISNULL(n.hc0,0) as hc0, ISNULL(n.hc1,0) as hc1, concat(n.details, ' (' , n.GL,')') as Details, ISNULL(n.est0,0) as est0, ISNULL(est1,0) as est1 from nV as n UNION Select n.code as code,'Total' ,0 as sn, ISNULL(SUM(n.hc0),0) as hc0 , ISNULL(SUM(n.hc1),0) as hc1, '' as Details, ISNULL(SUM(n.est0),0) as est0, ISNULL(SUM(est1),0) as est1 from nV as n GROUP BY n.code ";
+            System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+
+            for (Object[] tmp1 : tmp) {
+                if ("Total".equals(tmp1[1])) {
+                    htmltable += "<tr style='background-color: #f8f8f8; '>";
+                    htmltable += "<th>Total</th>";
+                    for (int i = 3; i < 8; i++) {
+                        if (i < 6) {
+                            htmltable += "<th>" + tmp1[i] + "</th>";
+                        } else {
+                            htmltable += "<th  style=\"text-align:right\">" + String.format("%,.2f", tmp1[i]) + "</th>";
+                        }
+                    }
+                    htmltable += "</tr><tr class=\"page-break\"><td colspan='6'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td></tr>";
+                    thead = "";
+                    j = 1;
+                } else {
+                    if ("".equals(thead)) {
+                        thead = "[" + tmp1[0] + "]\t" + tmp1[1];
+                        htmltable += "<tr style='background-color: #f8f8f8; '><th class='text-center' colspan='6'>" + Heading + dummy + "<br>" + thead + "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+                        htmltable += "<tr><th colspan='3'>Establishment</th><th style='display:none'></th><th style='display:none'></th><th>Details of Expenditure</th><th>Approved Estimate</th><th>Approved Estimate</th></tr>"
+                                + "<tr><th>Sn</th><th>" + (year - 1) + "</th><th>" + (year - 0) + "</th><th></th><th>" + (year - 1) + "</th><th>" + (year - 0) + "</th></tr>";
+                    }
+                    htmltable += "<tr>";
+                    htmltable += "<th>" + j++ + "</th>";
+                    for (int i = 3; i < 8; i++) {
+
+                        if (i < 6) {
+                            htmltable += "<td>" + tmp1[i] + "</td>";
+                        } else {
+                            htmltable += "<td style=\"text-align:right\">" + String.format("%,.2f", tmp1[i]) + "</td>";
+                        }
+
+                    }
+                    htmltable += "</tr>";
+                }
+                //htmltable += "</tr>";
+            }
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+
+        return htmltable;
+    }
+
+    protected String PersonnelReport1(Integer year, Integer ReportNum, String _ActiveVersion) {
+        String Heading = "ONDO STATE OF NIGERIA</br>";
+        String dummy;
+
+        dummy = Titles(ReportNum, "", year);
+
+        String htmltable = "";
+        String thead = "";
+        //display:none
+        htmltable = "<table id='reptable' class='table table-bordered'><thead style='display:none;background-color: #f8f8f8;'><tr><th id='reptitle' class='text-center' colspan='5'>" + Heading + dummy;
+        htmltable += "<tr style='white-space:nowrap'><th>Grade Level</th><th># of Staffs</th><th>" + year + " Approved<br>Estimates</th><th># of Staffs</th><th>" + year + " Approved<br>Estimates</th></tr>"
+                + "</thead><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        int j = 0;
+        try {
+            tx = session.beginTransaction();
+            String sql = "";
+
+            sql = "SELECT K.ADMIN_SEGMENT a, M.name b, K.SAL_GRADE c, Sum(K.HC_CURRENT) d, Sum(K.AMT_CURRENT) e, Sum(K.HC_NEXT) f, Sum(K.AMT_NEXT)"
+                    + " g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON M.administrative_segment = K.ADMIN_SEGMENT WHERE "
+                    + "left(K.SAL_GRADE,3) <> 'Con' and K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT,Left(k.SAL_GRADE,3), M.name, "
+                    + "K.SAL_GRADE UNION SELECT K.ADMIN_SEGMENT a, 'zz' b, K.POS_JOB_NAME c, Sum(K.HC_CURRENT) d, Sum(K.AMT_CURRENT) e, "
+                    + "Sum(K.HC_NEXT) f, Sum(K.AMT_NEXT) g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON M.administrative_segment = "
+                    + "K.ADMIN_SEGMENT WHERE left(K.SAL_GRADE,3) = 'Con' and K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT, M.name, "
+                    + "K.POS_JOB_NAME UNION SELECT K.ADMIN_SEGMENT a, 'z' b, 'Total for GL 01 - 17', Sum(K.HC_CURRENT) c, Sum(K.AMT_CURRENT) d, "
+                    + "Sum(K.HC_NEXT) f, Sum(K.AMT_NEXT) g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON M.administrative_segment = "
+                    + "K.ADMIN_SEGMENT where K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' and left(K.SAL_GRADE,3) <> 'Con' GROUP BY K.ADMIN_SEGMENT UNION SELECT "
+                    + "K.ADMIN_SEGMENT a, 'zzz0' b, 'Personnel Allowances' c, '' d,'' e,'' f, '' g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs"
+                    + " AS M ON M.administrative_segment = K.ADMIN_SEGMENT where K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT UNION "
+                    + "SELECT K.ADMIN_SEGMENT a, 'zzz1' b, 'Transport' c, '' d,Sum(K.TRANSPORT_CURRENT) e,'' f, Sum(K.TRANSPORT_NEXT) g FROM "
+                    + "dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON M.administrative_segment = K.ADMIN_SEGMENT where K.FISCAL_YEAR="
+                    + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT UNION SELECT K.ADMIN_SEGMENT a, 'zzz2' b, 'Rent' c, '' d,Sum(K.RENT_CURRENT) e,'' f, "
+                    + "Sum(K.RENT_NEXT) g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON M.administrative_segment = K.ADMIN_SEGMENT "
+                    + "where K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT UNION SELECT K.ADMIN_SEGMENT a, 'zzz3' b, 'Leave Bonus' c, '' "
+                    + "d,Sum(K.BONUS_CURRENT) e,'' f, Sum(K.BONUS_NEXT) g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON "
+                    + "M.administrative_segment = K.ADMIN_SEGMENT where K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT UNION "
+                    + "SELECT K.ADMIN_SEGMENT a, 'zzz4' b, 'Others' c, '' d,Sum(K.OTHERS_CURRENT) e,'' f, Sum(K.OTHERS_NEXT) g FROM "
+                    + "dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS M ON M.administrative_segment = K.ADMIN_SEGMENT where K.FISCAL_YEAR="
+                    + +year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT UNION SELECT K.ADMIN_SEGMENT a, 'zzz5' b, 'Total Allowance' c, '' d, "
+                    + "Sum(K.TRANSPORT_CURRENT)+Sum(K.RENT_CURRENT)+Sum(K.BONUS_CURRENT)+Sum(K.OTHERS_CURRENT) e, '' f, Sum(K.TRANSPORT_NEXT)+"
+                    + "Sum(K.RENT_NEXT)+Sum(K.BONUS_NEXT)+Sum(K.OTHERS_NEXT) g FROM dbo.SAP_Personnel AS K INNER JOIN dbo.MDAs AS "
+                    + "M ON M.administrative_segment = K.ADMIN_SEGMENT where K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "' GROUP BY K.ADMIN_SEGMENT UNION "
+                    + "SELECT K.ADMIN_SEGMENT a, 'zzzz' b, 'Grand Total' c, Sum(K.HC_CURRENT) d, Sum(K.AMT_CURRENT)+Sum(K.TRANSPORT_CURRENT)+"
+                    + "Sum(K.RENT_CURRENT)+Sum(K.BONUS_CURRENT)+Sum(K.OTHERS_CURRENT) e, Sum(K.HC_NEXT) f, Sum(K.AMT_NEXT)+"
+                    + "Sum(K.TRANSPORT_NEXT)+Sum(K.RENT_NEXT)+Sum(K.BONUS_NEXT)+Sum(K.OTHERS_NEXT) g FROM dbo.SAP_Personnel AS K "
+                    + "INNER JOIN dbo.MDAs AS M ON M.administrative_segment = K.ADMIN_SEGMENT where K.FISCAL_YEAR=" + year + " and M.administrative_segment = '" + _MDA + "'"
+                    + "GROUP BY K.ADMIN_SEGMENT ";
+            System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            String old = "";
+            //htmltable += "<tr><th colspan='5'>[" + tmp.get(0)[0] + "] " + tmp.get(0)[1] + "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+            htmltable += "<tr style='background-color: #f8f8f8; '><th class='text-center' colspan='5'>" + Heading + dummy + "<br>" + tmp.get(0)[0] + "] " + tmp.get(0)[1] + "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+            //htmltable += "<tr><th colspan='5'>["  "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+            htmltable += "<tr style='white-space:nowrap;background-color:#f8f8f8;align='center';'><th  class='text-center'>Grade Level</th><th  class='text-center'>No of Staff</th><th class='text-center'>" + year + " Approved<br>Estimates</th><th class='text-center'>No of Staff</th><th class='text-center'>" + year + " Approved<br>Estimates</th></tr>";
+            for (Object[] tmp1 : tmp) {
+                //htmltable += "<tr>";
+                if ("zzzz".equals(old)) {
+                    //Make new Page header                                        
+                    // htmltable += "<tr><th colspan='5'>[" + tmp1[0] + "] " + tmp1[1] + "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+                    thead = "[" + tmp1[0] + "]\t" + tmp1[1];
+                    htmltable += "<tr><th class='text-center' colspan='5'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+                    htmltable += "<tr style='background-color: #f8f8f8; '><th class='text-center' colspan='5'>" + Heading + dummy + "<br>" + thead + "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+                    htmltable += "<tr style='white-space:nowrap;background-color: #f8f8f8;'><th class='text-center'>Grade Level</th><th class='text-center'>No of Staff</th><th class='text-center'>" + year + " Approved<br>Estimates</th><th class='text-center'>No of Staff</th><th class='text-center'>" + year + " Approved<br>Estimates</th></tr>";
+                } else if ("zzz0".equals(tmp1[1]) || "zzz1".equals(tmp1[1]) || "zzz2".equals(tmp1[1]) || "zzz3".equals(tmp1[1]) || "zzz4".equals(tmp1[1]) || "zzz5".equals(tmp1[1])) {
+                    htmltable += "<tr style='white-space:nowrap'><td colspan='2'>" + tmp1[2] + "</td><td style='display:none'></td><td style='text-align:right'>" + String.format("%,.2f", tmp1[4]) + "</td><td></td><td style='text-align:right'>" + String.format("%,.2f", tmp1[6]) + "</td></tr>";
+                } else {
+                    htmltable += "<tr style='white-space:nowrap'><td>" + tmp1[2] + "</td><td  style='text-align:center'>" + tmp1[3] + "</td><td style='text-align:right'>" + String.format("%,.2f", tmp1[4]) + "</td><td style='text-align:center'>" + tmp1[5] + "</td><td style='text-align:right'>" + String.format("%,.2f", tmp1[6]) + "</td></tr>";
+                }
+                old = tmp1[1].toString();
+                //htmltable += "</tr>";
+            }
+
+            htmltable += "</tbody></table>";
+            htmltable = htmltable.replaceAll(">nu<", ">0.00<");
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+
+        return htmltable;
+    }
+
+    public String GrantReport(Integer year, String code, String category, String Head, Integer ReportNum, String _ActiveVersion) {
+
+        String sql = "with nV as(SELECT M.administrative_segment as code, M.name as name, (select ISNULL(sum(s.AmountLc),0) from SAP_Actuals s where s.FiscYear=(" + (year - 2) + ") and s.CmmtItem like '" + code + "%' AND S.FundsCtr= M.administrative_segment) as A1, "
+                + "(select ISNULL(sum(s.AmountLc),0) from SAP_Actuals s where s.FiscYear=(" + (year - 1) + ") and s.CmmtItem like '" + code + "%' AND S.FundsCtr= M.administrative_segment) as A2, "
+                + "(SELECT ISNULL(sum(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.economic_segment LIKE '" + code + "%' and y.admin_segment=m.administrative_segment and y.budget_year_id=(" + (year - 1) + ")) as B1, "
+                + "(SELECT ISNULL(sum(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.economic_segment LIKE '" + code + "%' and y.admin_segment=m.administrative_segment and y.budget_year_id=(" + (year - 0) + ")) as B2 FROM MDAs M WHERE M.sub_sector_code<>'00' and M.administrative_segment = '" + _MDA + "') "
+                + "SELECT n.code, n.name, n.A1, n.A2,n.B1,n.B2 from nV as n where (n.A1 <> 0 or n.A2 <> 0 or n.b1 <> 0 or n.b2 <> 0) UNION SELECT 'Total', '', SUM(n.A1), SUM(n.A2),SUM(n.B1),SUM(n.B2) from nV as n ";
+        //System.out.println(sql);
+        String Heading = "ONDO STATE OF NIGERIA</br>";
+        String dummy = Titles(ReportNum, " , ", year);
+        String htmltable = null;
+        htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='6'>" + Heading + dummy;
+        htmltable += "</tr><tr><th>Code</th><th>Name of Organization</th><th>Actual Expenditure from Subvention Jan- Dec " + (year - 2) + "</th><th>Actual Expenditure from Subvention Jan- Dec " + (year - 1) + "</th><th>Approved Estimates " + (year - 1) + "</th><th>Approved Estimates " + year + "</th></thead></tr><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            for (Object[] tmp1 : tmp) {
+                //Check4Nulls(tmp1, 2);
+                htmltable += "<tr>";
+                for (int i = 0; i < 6; i++) {
+                    if (i > 1) {
+                        htmltable += "<td  align='right'>" + String.format("%,.2f", tmp1[i]) + "</td>";
+                    } else {
+                        htmltable += "<td >" + tmp1[i] + "</td>";
+                    }
+                }
+                htmltable += "</tr>";
+            }
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+
+        return htmltable;
+    }
+    //and M.administrative_segment = '" + _MDA + "'
+
+    public String CRFReport(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        String tmp0 = "";
+        //and (CmmtItem like '12%' or CmmtItem like '13%' or CmmtItem like '14%' or CmmtItem like '15%')
+        for (String flt : Filt) {
+            tmp0 += " e.code LIKE '" + flt + "%' or";
+        }
+        tmp0 = tmp0.substring(0, tmp0.length() - 3);
+        String sql = "Select ROW_NUMBER() OVER (ORDER BY e.code) AS sn,e.code, e.name,"
+                + " (select ISNULL(sum(s.AmountLc),0) from SAP_Actuals s where s.FiscYear=(" + (year - 2) + ") and s.CmmtItem = e.code ) as A1,"
+                + " (select ISNULL(sum(s.AmountLc),0) from SAP_Actuals s where s.FiscYear=(" + (year - 1) + ") and s.CmmtItem = e.code ) as A2,"
+                + " (SELECT ISNULL(sum(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and  Y.economic_segment = e.code and y.budget_year_id=(" + (year - 1) + ")) as B1,"
+                + " (SELECT ISNULL(sum(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and  Y.economic_segment = e.code and y.budget_year_id=(" + (year) + ")) as B2"
+                + " from Economic_Segment e where" + tmp0;
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='7'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, "", year)
+                + "</th></tr><tr bgcolor='#f2f2f2'><th>Sn</th><th>Code</th><th>Description</th><th>Actual Revenue</br>Jan - Dec " + (year - 2) + "</th><th>Actual Revenue</br>Jan - Dec</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + year + "</th></tr></thead><tbody>";
+        System.out.println(sql);
+        double[] smry = new double[Filt.length + 4];
+        String Heading[] = Filt;
+
+        int i = 0;
+        Integer j = 0;
+        String other = "";
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        smry[0] = 0;
+        smry[1] = 0;
+        smry[2] = 0;
+        smry[3] = 0;
+
+        try {
+            tx = session.beginTransaction();
+            //get sector codes and names
+            String html = "";
+
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            Integer ncount = tmp.size();
+            Integer kcount = tmp.get(0).length;
+            for (int n = 0; n < ncount; n++) {
+                html += "<tr><td>" + tmp.get(n)[0] + "</td><td>" + tmp.get(n)[1] + "</td><td>" + tmp.get(n)[2] + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[3]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[4]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[5]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[6]) + "</td></tr>";
+                for (int k = 0; k < 4; k++) {
+                    smry[k] += (Double) tmp.get(n)[3 + k];
+                }
+
+            }
+            html += "<tr bgcolor='#f2f2f2'><th style='border-right: 0px'></th><th style='border-right:0px;border-left:0px'></th><th style='text-align:right; border-left:0px;'>Total</th><th style='text-align:right'>" + String.format("%,.2f", smry[0]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[1]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[2]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[3]) + "</th></tr>";
+            htmltable = htmltable + html + "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+
+        return htmltable;
+    }
+
+    public String RevenueReport(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        //Get the List of viable MDAs
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='" + Filt.length + 4 + "'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, Filt.toString(), year)
+                + "</th></tr><tr><th>Code</th><th>MDA Name</th>";//<th>Personnel</th><th>Overhead Cost</th><th>Special Programme</th><th>Total</th></tr></thead><tbody>";
+        //String[] TableVals = null;
+
+        //TableVals = new String[4 + Filt.length];
+        // double smry1 = 0, smry2 = 0, smry3 = 0, smry0 = 0;
+        double[] smry = new double[Filt.length + 4];
+        String Heading[] = Filt;
+        BudgetTypeComponentsHibernateHelper btc = new BudgetTypeComponentsHibernateHelper();
+        int i = 0;
+        for (String str : Filt) {
+            htmltable += "<th>" + btc.fetch_name(str).replace("\"", "").replace("[", "").replace("]", "") + "</th>";// Heading[i] = btc.fetch_name(str);
+            i++;
+        }
+        htmltable += "<th>Others</th><th>Total</th></tr></thead><tbody>";
+        i = 0;
+        Integer j = 0;
+        String sql = "";
+        String other = "";
+        ///NOT like '21010101%' AND b.economic_segment NOT like '2202%' and b.economic_segment NOT like '2210%' and b.economic_segment NOT like '14%'
+        for (String str : Filt) {
+            other += " AND b.economic_segment NOT like '" + str + "%' ";
+        }
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+
+            sql = "Select a.administrative_segment, a.name, ";
+            for (String str : Filt) {
+                sql += " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.economic_segment LIKE '" + str + "%' AND b.budget_year_id=" + year + ") as A" + i++ + " ,";
+            }
+            sql += " (SELECT COALESCE(SUM(b.budget_amount),0) FROM Year_Budget b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment=a.administrative_segment XXXXXXXX  AND b.budget_year_id=" + year + ") as A" + i++ + " ,";
+            sql += " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.budget_year_id=" + year + ") as Total";
+            //sql = sql.substring(0, sql.length() - 1);
+            sql += " FROM MDAs a where a.sub_sector_code !='00' and a.administrative_segment = '" + _MDA + "' ORDER BY a.administrative_segment";
+            sql = sql.replaceAll("XXXXXXXX", other);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            //Generate HTML Table
+            String html = "";
+            j = 0;
+            for (Object[] tmp1 : tmp) {
+//                TableVals[0] = (String) tmp1[0];            //Admin Code
+//                TableVals[1] = (String) tmp1[1];            //MDA Name
+//                for (int k = 2; k < TableVals.length; k++) {
+//                    smry[k] += (double) tmp1[k];
+//                    TableVals[k] = String.format("%,.2f", tmp1[k]);
+//                }
+                html += "<tr>";
+                for (int k = 0; k < tmp1.length; k++) {
+                    if (k > 1) {
+                        smry[k] += (double) tmp1[k];
+                        html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                    } else {
+                        html += "<td>" + tmp1[k] + "</td>";
+                    }
+                }
+                html += "</tr>";
+            }
+            //if (Check4Nulls(TableVals) == false) {
+
+            //}
+            htmltable = htmltable + html + "<tr><th colspan='2'>Total</th><th style='display:none'></th>";
+            for (int k = 2; k < smry.length; k++) {
+                htmltable += "<th style='text-align:right'>" + String.format("%,.2f", smry[k]) + "</th>";
+            }
+            htmltable += "</tr></tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    protected String CapitalBudgetAllocation2MDAS(Integer year, Integer ReportNum, String _ActiveVersion) {
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th class='text-center' colspan='11'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, "", year) + "</tr>";
+        htmltable += "<tr><th>Sn</th><th>MDA Name</th><th>" + (year - 2) + "<br>(Foreign Component)<br>Estimates</th><th>" + (year - 2) + "<br>(Local Component)<br>Estimates</th><th>" + (year - 2) + "<br>Total<br>Approved<br>Estimates<br>(Local & Foreign<br>Component)</th><th>" + (year - 1) + "<br>(Foreign Component)<br>Estimates</th><th>" + (year - 1) + "<br>(Local Component)<br>Estimates</th><th>" + (year - 1) + "<br>Total<br>Approved<br>Estimates<br>(Local & Foreign<br>Component)</th><th>" + (year - 0) + "<br>(Foreign Component)<br>Estimates</th><th>" + (year - 0) + "<br>(Local Component)<br>Estimates</th><th>" + (year - 0) + "<br>Total<br>Approved<br>Estimates<br>(Local & Foreign<br>Component)</th></tr>"
+                + "</thead></tr><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        int j = 1;
+        try {
+            tx = session.beginTransaction();
+            String sql = "with nV as( Select M.Name Name, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and Y.economic_segment like '13010201%'and Y.budget_year_id=" + (year - 2) + ") F1, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and Y.economic_segment like '13010101%'and Y.budget_year_id=" + (year - 2) + " ) L1, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and (Y.economic_segment like '13010101%' or Y.economic_segment like '13010201%') and Y.budget_year_id=" + (year - 2) + " ) T1, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and Y.economic_segment like '13010201%'and Y.budget_year_id=" + (year - 1) + " ) F2, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and Y.economic_segment like '13010101%'and Y.budget_year_id=" + (year - 1) + " ) L2, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and (Y.economic_segment like '13010101%' or Y.economic_segment like '13010201%') and Y.budget_year_id=" + (year - 1) + " ) T2, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and Y.economic_segment like '13010201%'and Y.budget_year_id=" + (year - 0) + " ) F3, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and Y.economic_segment like '13010101%'and Y.budget_year_id=" + (year - 0) + " ) L3, (SELECT ISNULL(SUM(Y.budget_amount),0) from Year_Budget Y where Y.budget_version_id='"+_ActiveVersion+"' and Y.admin_segment=M.administrative_segment and (Y.economic_segment like '13010101%' or Y.economic_segment like '13010201%') and Y.budget_year_id=" + (year - 0) + " ) T3 from MDAs M where M.sub_sector_code<>'00' and M.administrative_segment = '" + _MDA + "') Select N.Name, N.F1, N.L1, N.T1, N.F2, N.L2, N.T2, N.F3, N.L3, N.T3 from nV N Union ALL Select 'Total', Sum(N.F1), sum(N.L1), sum(N.T1), sum(N.F2), sum(N.L2), sum(N.T2), sum(N.F3), sum(N.L3), sum(N.T3) from nV N";
+            //System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            for (Object[] tmpl : tmp) {
+                if (tmpl[0].equals("Total")) {
+                    htmltable += "<tr style='background-color:#eee;font-weight:bold;'><td colspan='2'>Total</td><td style='display:none'></td>";
+                    for (int i = 1; i < tmpl.length; i++) {
+                        htmltable += "<td style='text-align:right;font-weight:bold;'>" + String.format("%,.2f", tmpl[i]) + "</td>";
+                    }
+                } else {
+                    htmltable += "<tr><td>" + j++ + "</td>";
+                    for (int i = 0; i < tmpl.length; i++) {
+                        if (i > 0) {
+                            htmltable += "<td style='text-align:right;'>" + String.format("%,.2f", tmpl[i]) + "</td>";
+                        } else {
+                            htmltable += "<td style='font-weight:bold;'>" + tmpl[i] + "</td>";
+                        }
+                    }
+
+                }
+                htmltable += "</tr>";
+            }
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    protected String GetMdasReports(Integer year, String Heads, Integer ReportNum, String _ActiveVersion) {
+        String htmltable = null;
+        htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='8'> "
+                + Titles(ReportNum, "", year);
+        htmltable += "</tr><tr><th>Code</th><th>Revenue Details</th><th>Actual Revenue Jan - Dec " + (year - 2) + "</th><th>Actual Revenue Jan - Dec " + (year - 1) + "</th><th>Approved Estimates " + (year - 1) + "</th>"
+                + "<th>Approved Estimates " + year + "</th><th>% of completion</th><th>Implementation Schedule</th></thead></tr><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+// 
+            String sql = "select administrative_Segment as admin_segment,'' as code,name, 0 as amt1, 0 as amt2, 0 as amt3, 0 as amt4, 0 as year, 0 as rank, '' as p_comp, '' as c_from, '' as c_to  from mdas"
+                    + " where sub_sector_code <> '00' and administrative_segment = '" + _MDA + "'union "
+                    + " SELECT a.admin_segment, a.programme_segment as code,"
+                    + " (select name from Programme_Segment where code =a.programme_segment) as name, "
+                    + " (select ISNULL((select sum(AmountLc) from SAP_Actuals where FiscYear= " + (year - 2) + " and FundedProg=a.programme_segment  and FundsCtr=a.admin_segment),0)) as amount1,"
+                    + " (select ISNULL((select sum(AmountLc) from SAP_Actuals  where FiscYear=" + (year - 1) + " and FundedProg=a.programme_segment and FundsCtr=a.admin_segment),0)) as amount2,"
+                    + " (select ISNULL(sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and admin_segment=a.admin_segment  and economic_segment=a.economic_segment and b.budget_year_id=" + (year - 1) + "and a.admin_segment=b.admin_segment  and a.programme_segment=b.programme_segment and a.economic_segment=b.economic_segment and a.functional_segment=b.functional_segment  and a.fund_segment=b.fund_segment  and a.geo_segment=b.geo_segment and a.dept_id=b.dept_id) as amount3,"
+                    + " (select ISNULL(sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and admin_segment=a.admin_segment  and economic_segment=a.economic_segment and b.budget_year_id=" + (year) + " and a.admin_segment=b.admin_segment  and a.programme_segment=b.programme_segment and a.economic_segment=b.economic_segment and a.functional_segment=b.functional_segment  and a.fund_segment=b.fund_segment  and a.geo_segment=b.geo_segment and a.dept_id=b.dept_id) as amount4,"
+                    + " (select year_id from Project_Detail where code=substring(a.programme_segment,3,10)) as year_id,"
+                    + " 100 as rank, ISNULL(a.percent_complete,'') as p_comp, ISNULL(a.complete_from,'') as c_from, ISNULL(a.complete_to,'') as c_to "
+                    + " FROM Year_Budget a  INNER JOIN MDAs M on M.administrative_segment = a.admin_segment where a.budget_version_id='"+_ActiveVersion+"' and M.sub_sector_code<>'00' and administrative_segment = '" + _MDA + "'"
+                    + " group by a.admin_segment,a.programme_segment,a.economic_segment,a.functional_segment,a.fund_segment,a.geo_segment,a.dept_id, a.percent_complete, a.complete_from, a.complete_to,a.id"
+                    + " order by admin_segment";
+            //System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            Integer ncount = tmp.size();
+            Double total1 = 0.0;
+            Double total2 = 0.0;
+            Double total3 = 0.0;
+            Double total4 = 0.0;
+            for (int n = 0; n < ncount; n++) {
+
+                if ("".equals(tmp.get(n)[1])) {
+                    if (n > 0) {
+                        htmltable += "<tr style='text-align:right; background-color: #eee;font-weight:bold;'> <td colspan='2'>Total</td><td style='display:none'></td><td>" + String.format("%,.2f", total1)
+                                + "</td> <td>" + String.format("%,.2f", total2) + "</td> <td>" + String.format("%,.2f", total3) + "</td> <td>" + String.format("%,.2f", total4) + "</td> <td colspan='2'></td><td style='display:none'></td></tr>";
+                        total1 = 0.0;
+                        total2 = 0.0;
+                        total3 = 0.0;
+                        total4 = 0.0;
+                    }
+
+                    htmltable += "<tr>";
+                    //System.out.println(tmp.get(n)[1]);
+                    htmltable += "<td colspan='8' style='font-weight: bold;'> [" + tmp.get(n)[0] + "] - " + tmp.get(n)[2] + "</td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td>";
+                    htmltable += "</tr>";
+                } else {
+                    htmltable += "<tr>";
+                    htmltable += "<td>" + tmp.get(n)[1] + "</td>";
+                    htmltable += "<td>" + tmp.get(n)[2] + "</td>";
+                    htmltable += "<td style='text-align:right'>" + String.format("%,.2f", tmp.get(n)[3]) + "</td>";
+                    total1 += (Double) tmp.get(n)[3];
+                    htmltable += "<td style='text-align:right'>" + String.format("%,.2f", tmp.get(n)[4]) + "</td>";
+                    total2 += (Double) tmp.get(n)[4];
+                    htmltable += "<td style='text-align:right'>" + String.format("%,.2f", tmp.get(n)[5]) + "</td>";
+                    total3 += (Double) tmp.get(n)[5];
+                    htmltable += "<td style='text-align:right'>" + String.format("%,.2f", tmp.get(n)[6]) + "</td>";
+                    total4 += (Double) tmp.get(n)[6];
+                    htmltable += "<td>" + tmp.get(n)[9] + "</td>";
+                    htmltable += "<td>" + tmp.get(n)[10] + "</td>";
+                    htmltable += "</tr>";
+                }
+
+                if (n + 1 == tmp.size()) {
+                    htmltable += "<tr style='text-align:right; background-color: #eee;font-weight:bold;'> <td colspan='2'>Total</td><td style='display:none'></td><td>" + String.format("%,.2f", total1)
+                            + "</td> <td>" + String.format("%,.2f", total2) + "</td> <td>" + String.format("%,.2f", total3) + "</td> <td>" + String.format("%,.2f", total4) + "</td> <td colspan='2'></td><td style='display:none'></td></tr>";
+                    total1 = 0.0;
+                    total2 = 0.0;
+                    total3 = 0.0;
+                    total4 = 0.0;
+                }
+
+            }
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    public String RevenueReport1(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        //Get the List of viable MDAs
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='" + Filt.length + 4 + "'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, Filt.toString(), year)
+                + "</th></tr><tr><th>Sn</th><th>Code</th><th>MDA Name</th>";
+        //String[] TableVals = null;
+
+        //TableVals = new String[4 + Filt.length];
+        // double smry1 = 0, smry2 = 0, smry3 = 0, smry0 = 0;
+        String tmp0 = "";
+        for (String flt : Filt) {
+            tmp0 += "economic_segment like '" + flt + "%' or ";
+        }
+        tmp0 = tmp0.substring(0, tmp0.length() - 3);
+
+        double[] smry = new double[Filt.length + 4];
+        String Heading[] = Filt;
+        BudgetTypeComponentsHibernateHelper btc = new BudgetTypeComponentsHibernateHelper();
+        int i = 0;
+        for (String str : Filt) {
+            htmltable += "<th>" + btc.fetch_name(str).replace("\"", "").replace("[", "").replace("]", "") + "</th>";// Heading[i] = btc.fetch_name(str);
+            i++;
+        }
+        htmltable += "<th>Total</th></tr></thead><tbody>";
+        i = 0;
+        Integer j = 0;
+        String sql = "";
+        String other = "";
+        ///NOT like '21010101%' AND b.economic_segment NOT like '2202%' and b.economic_segment NOT like '2210%' and b.economic_segment NOT like '14%'}
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            sql = "Select ROW_NUMBER() OVER (ORDER BY a.administrative_segment) AS sn,a.administrative_segment, a.name, ";
+            for (String str : Filt) {
+                sql += " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND b.economic_segment LIKE '" + str + "%' AND b.budget_year_id=" + year + ") as A" + i++ + " ,";
+            }
+            sql += " (select COALESCE(sum(b.budget_amount),0) from Year_Budget as b WHERE b.budget_version_id='"+_ActiveVersion+"' and b.admin_segment = a.administrative_segment AND (" + tmp0 + ") AND b.budget_year_id=" + year + ") as Total";
+            sql += " FROM MDAs a where a.sub_sector_code !='00' and a.administrative_segment = '" + _MDA + "' ORDER BY a.administrative_segment";
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+
+            //Generate HTML Table
+            String html = "";
+            j = 0;
+            for (Object[] tmp1 : tmp) {
+                html += "<tr>";
+                for (int k = 0; k < tmp1.length; k++) {
+                    if (k > 2) {
+                        smry[k] += (double) tmp1[k];
+                        html += "<td align='right'>" + String.format("%,.2f", tmp1[k]) + "</td>";
+                    } else {
+                        html += "<td>" + tmp1[k] + "</td>==";
+                    }
+                }
+                html += "</tr>";
+            }
+            //if (Check4Nulls(TableVals) == false) {
+
+            //}
+            htmltable = htmltable + html + "<tr><th></th><th></th><th>Total</th>";
+            for (int k = 3; k < smry.length; k++) {
+                htmltable += "<th align='right'>" + String.format("%,.2f", smry[k]) + "</th>";
+            }
+            htmltable += "</tr></tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    public String RevenuReport(Integer year, String code, String category, String Head, Integer ReportNum, String _ActiveVersion) {
+        String Heading = "ONDO STATE OF NIGERIA</br>";
+        String dummy = Titles(ReportNum, " , ", year);
+        String htmltable = null;
+        htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='6'>" + Heading + dummy;
+        htmltable += "</tr><tr><th>Code</th><th>Revenue Details</th><th>Actual Revenue Jan - Dec " + (year - 2) + "</th><th>Actual Revenue Jan - Dec " + (year - 1) + "</th><th>Approved Estimates " + (year - 1) + "</th><th>Approved Estimates " + year + "</th></thead></tr><tbody>";
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            String sql = "";
+            sql = Queries(year, category, Head, _ActiveVersion);//summary
+            //System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            for (Object[] tmp1 : tmp) {
+                //Check4Nulls(tmp1, 2);
+                htmltable += "<tr>";
+                for (int i = 0; i < 6; i++) {
+                    if (i > 1) {
+                        htmltable += "<td  align='right'>" + String.format("%,.2f", tmp1[i]) + "</td>";
+                    } else {
+                        htmltable += "<td >" + tmp1[i] + "</td>";
+                    }
+                }
+                htmltable += "</tr>";
+            }
+            htmltable += "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+
+        return htmltable;
+    }
+
+    public String GetIRbySectorReports(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        //Get the List of viable MDAs
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='6'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, "", year)
+                + "</th></tr><tr><th>Code</th><th>Organization Name</th><th>Actual Revenue</br>Jan - Dec " + (year - 2) + "</th><th>Actual Revenue</br>Jan - Dec</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + year + "</th></tr></thead><tbody>";
+
+        double[] smry = new double[Filt.length + 4];
+        String Heading[] = Filt;
+
+        int i = 0;
+        Integer j = 0;
+        String sql = "";
+        String other = "";
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            //get sector codes and names
+            String html = "";
+
+            sql = "SELECT  Sectors.sector_code, Sectors.name as na, a.administrative_segment, a.name as nb,"
+                    + " (select coalesce( sum(b.AmountLc),0)  from SAP_Actuals b where b.FiscYear=(" + (year - 2) + ") and b.FundsCtr = a.administrative_segment and b.CmmtItem like '" + Filt[i] + "%') as amt1,"
+                    + " (select coalesce( sum(b.AmountLc),0) from SAP_Actuals b where b.FiscYear=(" + (year - 1) + ") and b.FundsCtr = a.administrative_segment and b.CmmtItem like '" + Filt[i] + "%') as amt2,"
+                    + " (select coalesce( sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and b.budget_year_id=(" + (year - 1) + ") and b.admin_segment = a.administrative_segment and b.economic_segment like '" + Filt[i] + "%') as amt3,"
+                    + " (select coalesce( sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and b.budget_year_id=(" + (year) + ") and b.admin_segment = a.administrative_segment and b.economic_segment like '" + Filt[i] + "%') as amt4"
+                    + " FROM dbo.MDAs AS a INNER JOIN Sectors ON Sectors.sector_code = left(a.administrative_segment,2) WHERE a.sub_sector_code != '00' and a.administrative_segment = '" + _MDA + "'order BY Sectors.sector_code , a.administrative_segment, a.name ,Sectors.name";
+            //System.out.println(sql);
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            Integer ncount = tmp.size();
+            Integer kcount = tmp.get(0).length;
+            String dummy = "";
+            for (int n = 0; n < ncount; n++) {
+                html += "<tr>";
+                if (!dummy.equals((String) tmp.get(n)[0])) {
+                    html += "<th>" + tmp.get(n)[0] + "</th><th>" + tmp.get(n)[1] + "</th><th></th><th></th><th></th><th></th></tr><tr>";
+                    for (int k = 2; k < kcount; k++) {
+                        if (k > 3) {
+                            html += "<td align='right'>" + String.format("%,.2f", tmp.get(n)[k]) + "</td>";
+                        } else {
+                            html += "<td>" + tmp.get(n)[k] + "</td>";
+                        }
+                    }
+                } else {
+                    for (int k = 2; k < kcount; k++) {
+                        if (k > 3) {
+                            html += "<td align='right'>" + String.format("%,.2f", tmp.get(n)[k]) + "</td>";
+                        } else {
+                            html += "<td>" + tmp.get(n)[k] + "</td>";
+                        }
+                    }
+                }
+                html += "</tr>";
+                dummy = (String) tmp.get(n)[0];
+            }
+
+            htmltable = htmltable + html + "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+        return htmltable;
+    }
+
+    public String RevenueEstimatesReport(Integer year, String[] Filt, Integer ReportNum, String _ActiveVersion) {
+        String tmp0 = "and (";
+        String tmp1 = "and (";
+        //and (CmmtItem like '12%' or CmmtItem like '13%' or CmmtItem like '14%' or CmmtItem like '15%')
+        for (String flt : Filt) {
+            tmp0 += "CmmtItem like '" + flt + "%' or ";
+        }
+        tmp0 = tmp0.substring(0, tmp0.length() - 3);
+        tmp0 += ")";
+        for (String flt : Filt) {
+            tmp1 += "economic_segment like '" + flt + "%' or ";
+        }
+        tmp1 = tmp1.substring(0, tmp1.length() - 3);
+        tmp1 += ")";
+        String sql = "select administrative_Segment as admin_segment,'' as code,name, 0 as amt1, 0 as amt2, 0 as amt3, 0 as amt4  from mdas"
+                + " where sub_sector_code <> '00' and administrative_segment = '" + _MDA + "'"
+                + " union"
+                + " SELECT a.admin_segment, a.economic_segment as code,"
+                + " (select name from Economic_Segment where code=a.economic_segment) as name,"
+                + " (select ISNULL(sum(AmountLc),0) from SAP_Actuals where FiscYear=(" + (year - 2) + ") " + tmp0 + " and CmmtItem =a.economic_segment and FundsCtr=a.admin_segment) as A1,"
+                + " (select ISNULL(sum(AmountLc),0) from SAP_Actuals where FiscYear=(" + (year - 1) + ") " + tmp0 + " and CmmtItem=a.economic_segment and FundsCtr=a.admin_segment) as A2, "
+                + " (select ISNULL(sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and admin_segment=a.admin_segment " + tmp1 + " and economic_segment=a.economic_segment and b.budget_year_id=(" + (year - 1) + ")) as B1,"
+                + " (select ISNULL(sum(b.budget_amount),0) from Year_Budget b where b.budget_version_id='"+_ActiveVersion+"' and admin_segment=a.admin_segment " + tmp1 + " and economic_segment=a.economic_segment and b.budget_year_id=(" + (year) + ")) as B2"
+                + " FROM Year_Budget a INNER JOIN MDAs M on M.administrative_segment = a.admin_segment WHERE " + tmp1.substring(3, tmp1.length())
+                + " and a.budget_version_id='"+_ActiveVersion+"' and M.sub_sector_code<>'00'  and administrative_segment = '" + _MDA + "'group by a.admin_segment,a.programme_segment,a.economic_segment,a.functional_segment,a.fund_segment,a.geo_segment,a.dept_id, a.percent_complete, a.complete_from, a.complete_to,a.id"
+                + " order by admin_segment";
+        String htmltable = "<table id='reptable' class='table table-bordered'><thead><tr><th id='reptitle' class='text-center' colspan='6'>ONDO STATE OF NIGERIA</br>"
+                + Titles(ReportNum, "", year)
+                + "</th></tr><trbgcolor='#d9d9d9'><th>Code</th><th>Description</th><th>Actual Revenue</br>Jan - Dec " + (year - 2) + "</th><th>Actual Revenue</br>Jan - Dec</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + (year - 1) + "</th><th>Approved Estimates</br>" + year + "</th></tr></thead><tbody>";
+        System.out.println(sql);
+        double[] smry = new double[Filt.length + 4];
+        String Heading[] = Filt;
+
+        int i = 0;
+        Integer j = 0;
+        String other = "";
+
+        final Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+        Transaction tx = null;
+        smry[0] = 0;
+        smry[1] = 0;
+        smry[2] = 0;
+        smry[3] = 0;
+
+        try {
+            tx = session.beginTransaction();
+            //get sector codes and names
+            String html = "";
+
+            List<Object[]> tmp = session.createSQLQuery(sql).list();
+            Integer ncount = tmp.size();
+            Integer kcount = tmp.get(0).length;
+            String dummy = "";
+            for (int n = 0; n < ncount; n++) {
+//                html += "<tr>";
+                if ("".equals((String) tmp.get(n)[1]) || tmp.get(n)[1] == null) {
+                    //New MDA
+                    if (!"".equals(html)) {
+                        html += "<tr bgcolor='#e6e6e6'><th colspan='2'>Total</th><th style='display:none'></th><th style='text-align:right'>" + String.format("%,.2f", smry[0]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[1]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[2]) + "</th><th style='text-align:right'>" + String.format("%,.2f", smry[3]) + "</th></tr><tr style='height:40px;'><td  colspan='6' ></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td><td style='display:none'></td></tr>";
+                        for (int k = 0; k < 4; k++) {
+                            smry[k] = 0;
+                        }
+                    }
+
+                    html += "<tr bgcolor='#f2f2f2'><th>" + tmp.get(n)[0] + "</th><th colspan='5'>" + tmp.get(n)[2] + "</th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th><th style='display:none'></th></tr>";
+                } else {
+                    html += "<tr><td>" + tmp.get(n)[1] + "</td><td>" + tmp.get(n)[2] + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[3]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[4]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[5]) + "</td><td align='right'>" + String.format("%,.2f", tmp.get(n)[6]) + "</td></tr>";
+                    for (int k = 0; k < 4; k++) {
+                        smry[k] += (Double) tmp.get(n)[3 + k];
+                    }
+                }
+            }
+
+            htmltable = htmltable + html + "</tbody></table>";
+            tx.commit();
+        } catch (HibernateException e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            //session.close();
+        }
+
+        return htmltable;
+    }
+
+    String Titles(Integer idx, String constStrings, Integer year) {
+        String[] RepTitle = new String[30];
+        String[] consts = constStrings.split("\\,");
+        if (null != idx) {
+            switch (idx) {
+                case 1:
+                    return "ALLOCATIONS TO MDAs BY " + consts[1].toUpperCase() + " SECTOR </br>" + year + " BUDGET";
+                case 2:
+                    return "ALLOCATIONS TO MDAs BY " + consts[1].toUpperCase() + " </br>" + year + " BUDGET";
+                case 3:
+                    return RepTitle[3] = "FIRST SCHEDULE</br>YEAR " + year + " APPROVED RECURRENT ESTIMATES</br>ALLOCATION OF FUNDS TO MINISTRIES/ DEPARTMENTS/ AGENCIES IN THE STATE";
+                case 4:
+                    return "SECOND SCHEDULE</br> YEAR " + year + " CAPITAL ESTIMATES</br>ALLOCATION TO ARMS/MINISTRIES/ DEPARTMENTS/ AGENCIES";
+                case 5:
+                    return "SUMMARY OF APPROVED RECURRENT AND CAPITAL ESTIMATES " + year;
+                case 6:
+                    return "YEAR " + year + " APPROVED ESTIMATES</br>SUMMARY OF REVENUE BY ECONOMIC SEGMENT " + year;
+                case 7:
+                    return "YEAR " + year + " APPROVED ESTIMATES</br>DETAILS OF REVENUE BY ECONOMIC SEGMENT " + year;
+                case 8:
+                    return "Summary of Total Revenue Based on Sector by Independent Revenue. ".toUpperCase() + year;
+                case 9:
+                    return "Revenue Details<br> Revenue Estimates ".toUpperCase() + year;
+                case 10:
+                    return "YEAR " + year + " APPROVED ESTIMATES</br>SUMMARY OF RECUURENT ESTIMATES";
+                case 11:
+                    return "ESTIMATES " + year + "<br>GRANTS TO PARASTATALS / TERTIARY INSTITUTIONS ";
+                case 15:
+                case 12:
+                    return "ESTIMATES " + year + "<br>RECURRENT EXPENDITURE";
+                case 13:
+                    return "CONSOLIDATED REVENUE FUNDS CHARGES " + year;
+                case 14:
+                    return "ESTIMATES " + year + "<br>GRANTS AND LOANS";
+                case 16:
+                    return "<br>SECTORAL SUMMARY OF " + year + " BUDGET";
+                case 17:
+                    return year + "ALLOCATION OF FUNDS TO MDAs IN THE STATE";
+                case 18:
+                    return "CONSOLIDATED BUDGET SUMMARY (MASTER BUDGET) " + year + "<br>Summary of Capital Receipts".toUpperCase();
+                case 19:
+                    return "CONSOLIDATED BUDGET SUMMARY (MASTER BUDGET) " + year + "<br>BASED ON SECTORS".toUpperCase();
+                case 21:
+                    return "APPROVED CAPITAL ESTIMATES <br/> PROJECT DETAILS ".toUpperCase() + year;
+                case 20:
+                    return "SPECIAL PROGRAMME ".toUpperCase() + year;
+                case 23:
+                    return "<br>DETAILS OF CAPITAL PROJECT BUDGET UNDER PROGRAMME" + year;
+                case 22:
+                    return "SUMMARY OF TOTAL CAPITAL BUDGET BASED ON SECTORS ".toUpperCase() + year;
+                case 26:
+                    return "Summary of Capital Budget By functions (COFOG) ".toUpperCase() + year;
+                case 24:
+                    return year + " capital budget<br>" + "allocations to ministries, departments and agencies".toUpperCase();
+                case 25:
+                    return "Summary of Capital Budget By Programme ".toUpperCase() + year;
+                case 27:
+                    return "YEAR " + year + " APPROVED ESTIMATES</br>SUMMARY OF REVENUE BY " + consts[0].toUpperCase();
+                case 28:
+                    return "Summary of Capital Budget By Policy ".toUpperCase() + year;
+                case 33:
+                    return "<br>CAPITAL EXPENDITURE B ECONOMIC SEGMENT " + year;
+                case 40:
+                    return "SUMMARY OF APPROVED PERSONNEL COST ".toUpperCase() + year;
+                case 41:
+                    return ("Estimates, " + year + "<br>RECURRENT EXPENDITURE ").toUpperCase();
+                case 42:
+                    return ("Estimates, " + year + "<br>OVERALL SUMMARY OF PERSONNEL COST ").toUpperCase();
+//                case 4000:
+//                    return "RECURRENT EXPENDITURE</br>HEAD " + consts[0] + " - " + consts[1] + "</br>OVERHEAD COST";
+                default:
+                    return "";
+            }
+        }
+        return "";
+    }
+
+    String Queries(Integer year, String segment, String code, String _ActiveVersion) {
+        String sqlq = null;
+        if (null != segment) {
+            switch (segment) {
+                case "Economic Segment":
+                    if (!"ALL".equals(code)) {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,1)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,1)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment  where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,1)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,1)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header1 a where a.code LIKE'" + code + "%'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,2)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,2)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,2)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,2)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header2 a where a.code LIKE'" + code + "%'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,4)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,4)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,4)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,4)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header3 a where a.code LIKE'" + code + "%'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,6)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,6)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,6)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,6)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header4 a where a.code LIKE'" + code + "%'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,8)=a.code) as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,8)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,8)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,8)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment a  where a.code LIKE'" + code + "%'";
+                        return sqlq;
+                    } else {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,1)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,1)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,1)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,1)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header1 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,2)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,2)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,2)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,2)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header2 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,4)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,4)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,4)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,4)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header3 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,6)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,6)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,6)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,6)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment_Header4 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.CmmtItem,8)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.CmmtItem,8)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.economic_segment,8)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.economic_segment,8)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Economic_Segment a";
+                        return sqlq;
+                    }
+                case "Functional Segment":
+                    if (!"all".equals(code.toLowerCase())) {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FuncArea,3)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FuncArea,3)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.functional_segment,3)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.functional_segment,3)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Functional_Segment_Header1 a where left(a.code,3)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FuncArea,4)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FuncArea,4)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.functional_segment,4)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.functional_segment,4)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Functional_Segment_Header2 a where left(a.code,3)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FuncArea,5)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FuncArea,5)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.functional_segment,5)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.functional_segment,5)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Functional_Segment a where left(a.code,3)='" + code + "'";
+                        return sqlq;
+                    } else {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FuncArea,3)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FuncArea,3)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.functional_segment,3)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.functional_segment,3)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Functional_Segment_Header1 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FuncArea,4)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FuncArea,4)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.functional_segment,4)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.functional_segment,4)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Functional_Segment_Header2 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FuncArea,5)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FuncArea,5)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.functional_segment,5)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.functional_segment,5)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Functional_Segment a";
+                        return sqlq;
+                    }
+                case "Fund Segment":
+                    if (!"all".equals(code.toLowerCase())) {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.Fund,2)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.Fund,2)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.fund_segment,2)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.fund_segment,2)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Fund_Segment_Header1 a where left(a.code,2)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.Fund,3)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.Fund,3)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.fund_segment,3)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.fund_segment,3)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Fund_Segment_Header2 a where left(a.code,2)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.Fund,5)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.Fund,5)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.fund_segment,5)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.fund_segment,5)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Fund_Segment a where left(a.code,2)='" + code + "'";
+                        return sqlq;
+                    } else {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.Fund,2)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.Fund,2)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.fund_segment,23)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.fund_segment,2)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Fund_Segment_Header1 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.Fund,3)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.Fund,3)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.fund_segment,3)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.fund_segment,3)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Fund_Segment_Header2 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.Fund,5)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.Fund,5)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.fund_segment,5)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.fund_segment,5)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Fund_Segment a";
+                        return sqlq;
+                    }
+                case "Geographic Segment":
+                    if (!"all".equals(code.toLowerCase())) {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,3)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,3)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,3)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,3)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment_Header1 a where left(a.code,3)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,4)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,4)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,4)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,4)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment_Header2 a where left(a.code,3)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,6)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,6)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,6)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,6)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment_Header3 a where left(a.code,3)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,8)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,8)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,8)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,8)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment a where left(a.code,3)='" + code + "'";
+                        return sqlq;
+                    } else {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,3)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,3)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,3)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,3)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment_Header1 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,4)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,4)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,4)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,4)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment_Header2 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,6)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,6)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,6)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,6)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment_Header3 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.BusArea,8)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.BusArea,8)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.geo_segment,8)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.geo_segment,8)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Geographic_Segment a";
+                        return sqlq;
+                    }
+                case "Programme Segment":
+                    if (!"all".equals(code.toLowerCase())) {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,2)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,2)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,2)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,2)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Programme_Segment_Header1 a where left(a.code,2)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,8)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,8)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,8)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,8)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Programme_Segment_Header2 a where left(a.code,2)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,10)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,10)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,10)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,10)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Project_Detail a where left(a.code,2)='" + code + "'"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,12)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,12)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,12)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,12)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Programme_Segment a where left(a.code,2)='" + code + "'";
+                        return sqlq;
+                    } else {
+                        sqlq = "select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,2)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,2)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,2)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,2)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Programme_Segment_Header1 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,8)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,8)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,8)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,8)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Programme_Segment_Header2 a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,10)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,10)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,10)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,10)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Project_Detail a"
+                                + " UNION"
+                                + " select a.code, a.name, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 2) + " and left(b.FundedProg,12)=a.code AND M.sub_sector_code<>'00') as amt1, "
+                                + " (select COALESCE(sum(b.AmountLc),0) from SAP_Actuals b INNER JOIN MDAs M ON M.administrative_segment=b.FundsCtr  where b.FiscYear=" + (year - 1) + " and left(b.FundedProg,12)=a.code AND M.sub_sector_code<>'00') as amt2, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + (year - 1) + " and left(c.programme_segment,12)=a.code AND M.sub_sector_code<>'00') as amt3, "
+                                + " (select COALESCE(sum(c.budget_amount),0) from Year_Budget c INNER JOIN MDAs M ON M.administrative_segment=c.admin_segment where c.budget_version_id='"+_ActiveVersion+"' and c.budget_year_id=" + year + " and left(c.programme_segment,12)=a.code AND M.sub_sector_code<>'00') as amt4"
+                                + " from Programme_Segment a";
+                        return sqlq;
+                    }
+                default:
+                    break;
+            }
+        }
+
+        return sqlq;
+    }
+
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+    /**
+     * Handles the HTTP <code>GET</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        processRequest(request, response);
+    }
+
+    /**
+     * Returns a short description of the servlet.
+     *
+     * @return a String containing servlet description
+     */
+    @Override
+    public String getServletInfo() {
+        return "Short description";
+    }// </editor-fold>
+
+}

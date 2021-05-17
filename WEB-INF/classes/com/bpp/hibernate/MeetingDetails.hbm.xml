@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated Aug 14, 2018 4:16:02 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="com.bpp.hibernate.MeetingDetails" table="Meeting_Details" catalog="OSG_Budget_DB">
+        <id name="id" type="int">
+            <column name="id" />
+            <generator class="assigned"></generator>
+        </id>
+        <many-to-one name="budgetTimetableActivities" class="com.bpp.hibernate.BudgetTimetableActivities" fetch="select">
+            <column name="budget_timetable_activity_id" not-null="true" />
+        </many-to-one>
+        <property name="name" type="string">
+            <column name="name" length="50" not-null="true" />
+        </property>
+        <property name="venue" type="string">
+            <column name="venue" length="250" not-null="true" />
+        </property>
+        <property name="meetingDate" type="timestamp">
+            <column name="meeting_date" length="23" not-null="true" />
+        </property>
+        <property name="dateCreated" type="timestamp">
+            <column name="date_created" length="23" not-null="true" />
+        </property>
+        <property name="orgId" type="java.lang.Integer">
+            <column name="org_id" />
+        </property>
+        <set name="meetingDeliberationses" table="Meeting_Deliberations" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="meeting_id" not-null="true" />
+            </key>
+            <one-to-many class="com.bpp.hibernate.MeetingDeliberations" />
+        </set>
+        <set name="meetingAttendantses" table="Meeting_Attendants" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="meeting_id" not-null="true" />
+            </key>
+            <one-to-many class="com.bpp.hibernate.MeetingAttendants" />
+        </set>
+        <set name="meetingAgendaDetailses" table="Meeting_Agenda_Details" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="meeting_id" not-null="true" />
+            </key>
+            <one-to-many class="com.bpp.hibernate.MeetingAgendaDetails" />
+        </set>
+    </class>
+</hibernate-mapping>
